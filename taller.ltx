@@ -1,0 +1,454 @@
+A continuación se resuelve el Problema 26 de los \textit{Problemas de Repaso} de la Sección de 6, del libro \textit{Operations Research: Applications and Algorithms}, 4th ed. de Winston, W. L., pp. 353-354. Se requiere:
+\begin{itemize}
+    \item Utilizar Gurobi.
+    \item Todos los valores de dinero deben ser multiplicados por 3270.
+    \item Además plantear el problema dual y darle solución a partir de la información obtenida en la solución del primal y resolverlo usando holgura complementaria.
+\end{itemize}
+
+\subsection*{Enunciado del problema modificado}
+
+Wivco produce dos productos: 1 y 2. Los datos relevantes se muestran en la Tabla 64. Cada semana se pueden comprar hasta 400 unidades de materia prima a un costo de \$4905 por unidad. La empresa emplea a cuatro trabajadores, quienes trabajan 40 horas por semana (sus salarios se consideran un costo fijo). Los trabajadores pueden trabajar horas extra, que se pagan a \$29430 por hora. Cada semana, se disponen de 320 horas de tiempo de máquina.
+
+En ausencia de publicidad, se demandarán 50 unidades del producto 1 y 60 unidades del producto 2 cada semana. La publicidad puede usarse para estimular la demanda de cada producto. Cada dólar gastado en publicidad del producto 1 aumenta su demanda en 10 unidades; cada dólar gastado en publicidad del producto 2 aumenta su demanda en 15 unidades. Se pueden gastar hasta \$327000 en publicidad.
+
+Use Gurobi para resolver este PL. Luego responda las preguntas siguientes con ayuda de los resultados que da la computadora:
+\begin{itemize}
+    \item a. Si el tiempo extra fuera de sólo 1080 dólares/hora, ¿Wivco recurriría a él?
+    \item b. Si cada unidad del producto 1 se vendiera en 4185 dólares, ¿la base actual seguiría siendo óptima? ¿Cuál sería la nueva solución óptima?
+    \item c. ¿Cuánto es lo más que Wivco debería estar dispuesta a pagar por otra unidad de materia prima?
+    \item d. ¿Cuánto debería estar dispuesto a pagar Wivco por otra hora de tiempo máquina?
+    \item e. Si a cada trabajador se le exigiera (como parte de la semana de trabajo regular) trabajar 45 horas por semana, ¿cuál sería la utilidad de la compañía?
+    \item f. Explique por qué el precio sombra del renglón (1) es 0.10. (Sugerencia: si el lado derecho de (1) se incrementara de 50 a 51, entonces por no haber publicidad para el producto 1, ahora se venderían 51 unidades a la semana.)
+    \item g. Wivco planea elaborar un nuevo producto (producto 3). Cada unidad se vende en 17 dólares y requiere 2 horas de mano de obra, 1 unidad de materia prima y 2 horas de tiempo de máquina. ¿Debería Wivco fabricar el producto 3?
+    \item h. Si cada unidad del producto 2 se vendiera en 10 dólares, ¿la base actual seguiría siendo óptima?
+\end{itemize}
+
+\subsubsection*{Variables de Decisión}
+\begin{itemize}
+    \item $P1$: número de unidades del producto 1 producidas cada semana
+    \item $P2$: número de unidades del producto 2 producidas cada semana
+    \item $OT$: número de horas de trabajo extra utilizadas cada semana
+    \item $RM$: número de unidades de materia prima compradas cada semana
+    \item $A1$: dólares gastados cada semana en publicidad del producto 1
+    \item $A2$: dólares gastados cada semana en publicidad del producto 2
+\end{itemize}
+
+\subsubsection*{Modelo Primal}
+Entonces Wivco debería resolver el PL, siguiente:
+$$
+\text{Maximizar} \quad Z = 4050P1 + 2160P2 - 29430OT - 4905RM - A1 - A2 \\
+\text{s.a.:} \\
+\begin{align*}
+0.75P1 + 10A1 &\geq 50 \text{ und.} \quad \text{(R1)} \\
+0.75P2 + 15A2 &\geq 60 \text{ und.} \quad
+
+ \text{(R2)} \\
+0.75P1 + 0.5P2 + 2P3 & \leq 160 + OT \text{ hrs.} \quad \text{(R3)} \\
+2P1 + P2 + P3 & \leq RM \text{ und.} \quad \text{(R4)} \\
+RM & \leq 400 \text{ und.} \quad \text{(R5)} \\
+A1 + A2 & \leq \$327000 \quad \text{(R6)} \\
+1.5P1 + 0.8P2 + 2P3 & \leq 320 \text{ hrs.} \quad \text{(R7)} \\
+\text{Todas las variables} & \geq 0
+\end{align*}
+$$
+
+\subsubsection*{Table 64}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lcc}
+\toprule
+ & \textbf{Product 1} & \textbf{Product 2} \\
+\midrule
+Selling price & \$4050 & \$2160 \\
+Labor required & 0.75 hour & 0.50 hour \\
+Machine time required & 1.5 hours & 0.80 hour \\
+Raw material required & 2 units & 1 unit \\
+\bottomrule
+\end{tabular}
+\caption{Table 64}
+\end{table}
+
+```latex
+
+\subsection*{Desarrollo}
+
+\begin{verbatim}
+import gurobipy as gp
+from gurobipy import GRB
+
+# Crear el modelo
+m = gp.Model("Problema26_Modificado")
+
+# Multiplicador para valores monetarios
+mult = 3270
+
+# Añadir variables de decisión
+P1 = m.addVar(name="P1", lb=0)
+P2 = m.addVar(name="P2", lb=0)
+OT = m.addVar(name="OT", lb=0)
+RM = m.addVar(name="RM", lb=0)
+A1 = m.addVar(name="A1", lb=0)
+A2 = m.addVar(name="A2", lb=0)
+
+# Definir la función objetivo
+m.setObjective(15 * mult * P1 + 8 * mult * P2 - 6 * mult * OT - 1.5 * mult * RM - A1 - A2, GRB.MAXIMIZE)
+
+# Añadir restricciones
+m.addConstr(0.75 * P1 + 10 * A1 >= 50, "R1")
+m.addConstr(0.75 * P2 + 15 * A2 >= 60, "R2")
+m.addConstr(0.75 * P1 + 0.5 * P2 <= 160 + OT, "R3")
+m.addConstr(2 * P1 + P2 <= RM, "R4")
+m.addConstr(RM <= 400, "R5")
+m.addConstr(A1 + A2 <= 100 * mult, "R6")
+m.addConstr(1.5 * P1 + 0.8 * P2 <= 320, "R7")
+
+# Optimizar el modelo
+m.optimize()
+
+# Obtener y mostrar los resultados
+print("\n# Valores óptimos de las variables de decisión:")
+for v in m.getVars():
+    print(f'{v.VarName}: {v.X:.2f}')
+print(f'\nValor Óptimo del Objetivo: {m.ObjVal:.2f}')
+print("El valor óptimo de la función objetivo representa el máximo beneficio neto obtenido con la combinación óptima de variables de decisión.\n")
+
+# Mostrar costos reducidos
+print("\n# Costos reducidos de las variables de decisión:")
+for v in m.getVars():
+    print(f'{v.VarName}: {v.RC:.2f}')
+print("Los costos reducidos indican cuánto cambiaría el valor de la función objetivo si se incrementara una unidad de una variable no básica (variables con valor 0 en la solución óptima).")
+print("Si el costo reducido es 0, la variable está en la solución óptima actual.")
+print("Un costo reducido negativo en un problema de maximización significa que incrementar la variable reduciría el valor de la función objetivo.\n")
+print("Un costo reducido positivo en un problema de minimización significa que incrementar la variable aumentaría el valor de la función objetivo.\n")
+
+# Mostrar holgura o exceso
+print("\n# Holgura o exceso de las restricciones:")
+for c in m.getConstrs():
+    print(f'{c.ConstrName}: {c.Slack:.2f}')
+print("La holgura (slack) indica cuánto margen hay en una restricción. Si la holgura es 0, la restricción es activa, es decir, se cumple exactamente.\n")
+
+# Mostrar precios sombra
+print("\n# Precios sombra de las restricciones:")
+for c in m.getConstrs():
+    print(f'{c.ConstrName}: {c.Pi:.2f}')
+print("El precio sombra (shadow price) muestra el cambio en el valor de la función objetivo por cada unidad adicional del recurso disponible en la restricción.\n")
+
+# Obtener rangos de lados derechos
+print("\n# Rangos permisibles de los lados derechos (RHS):")
+for c in m.getConstrs():
+    print(f'{c.ConstrName}: {c.SARHSLow:.2f} to {c.SARHSUp:.2f}')
+print("Los rangos permisibles de los lados derechos indican cuánto pueden variar los valores de las restricciones antes de que la base óptima cambie.\n")
+
+# Obtener rangos de coeficientes de la función objetivo
+print("\n# Rangos permisibles de los coeficientes de la función objetivo:")
+for v in m.getVars():
+    print(f'{v.VarName}: {v.SAObjLow:.2f} to {v.SAObjUp:.2f}')
+print("Los rangos permisibles de los coeficientes de la función objetivo indican cuánto pueden variar los coeficientes de las variables en la función objetivo antes de que la base óptima cambie.\n")
+
+\end{verbatim}
+\begin{verbatim}
+    Gurobi Optimizer version 11.0.3 build v11.0.3rc0 (linux64 - "Arch Linux")
+
+    CPU model: AMD A4-5000 APU with Radeon(TM) HD Graphics, instruction set [SSE2|AVX]
+    Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+    
+    Optimize a model with 7 rows, 6 columns and 15 nonzeros
+    Model fingerprint: 0x3fb87a59
+    Coefficient statistics:
+      Matrix range     [5e-01, 2e+01]
+      Objective range  [1e+00, 5e+04]
+      Bounds range     [0e+00, 0e+00]
+      RHS range        [5e+01, 3e+05]
+    Presolve removed 1 rows and 0 columns
+    Presolve time: 0.03s
+    Presolved: 6 rows, 6 columns, 14 nonzeros
+    
+    Iteration    Objective       Primal Inf.    Dual Inf.      Time
+           0    1.0464000e+07   5.849142e+01   0.000000e+00      0s
+           3    7.9788000e+06   0.000000e+00   0.000000e+00      0s
+    
+    Solved in 3 iterations and 0.06 seconds (0.00 work units)
+    Optimal objective  7.978800000e+06
+    
+    # Valores óptimos de las variables de decisión:
+    P1: 160.00
+    P2: 80.00
+    OT: 0.00
+    RM: 400.00
+    A1: 0.00
+    A2: 0.00
+    
+    Valor Óptimo del Objetivo: 7978800.00
+    El valor óptimo de la función objetivo representa el máximo beneficio neto obtenido con la combinación óptima de variables de decisión.
+    
+    
+    # Costos reducidos de las variables de decisión:
+    P1: 0.00
+    P2: 0.00
+    OT: -6539.60
+    RM: 0.00
+    A1: -1.00
+    A2: 0.00
+    Los costos reducidos indican cuánto cambiaría el valor de la función objetivo si se incrementara una unidad de una variable no básica (variables con valor 0 en la solución óptima).
+    Si el costo reducido es 0, la variable está en la solución óptima actual.
+    Un costo reducido negativo en un problema de maximización significa que incrementar la variable reduciría el valor de la función objetivo.
+    
+    Un costo reducido positivo en un problema de minimización significa que incrementar la variable aumentaría el valor de la función objetivo.
+    
+    
+    # Holgura o exceso de las restricciones:
+    R1: -70.00
+    R2: 0.00
+    R3: 0.00
+    R4: 0.00
+    R5: 0.00
+    R6: 327000.00
+    R7: 16.00
+    La holgura (slack) indica cuánto margen hay en una restricción. Si la holgura es 0, la restricción es activa, es decir, se cumple exactamente.
+    
+    
+    # Precios sombra de las restricciones:
+    R1: 0.00
+    R2: -0.07
+    R3: 13080.40
+    R4: 19619.85
+    R5: 14714.85
+    R6: 0.00
+    R7: 0.00
+    El precio sombra (shadow price) muestra el cambio en el valor de la función objetivo por cada unidad adicional del recurso disponible en la restricción.
+    
+    
+    # Rangos permisibles de los lados derechos (RHS):
+    R1: -inf to 120.00
+    R2: 60.00 to 4905060.00
+    R3: 150.00 to 160.00
+    R4: 0.00 to 26.67
+    R5: 400.00 to 426.67
+    R6: 0.00 to inf
+    R7: 304.00 to inf
+    Los rangos permisibles de los lados derechos indican cuánto pueden variar los valores de las restricciones antes de que la base óptima cambie.
+    
+    
+    # Rangos permisibles de los coeficientes de la función objetivo:
+    P1: 47415.10 to 52320.10
+    P2: 24524.95 to 26977.45
+    OT: -inf to -13080.40
+    RM: -19619.85 to inf
+    A1: -inf to -0.00
+    A2: -16350.00 to -0.00
+    Los rangos permisibles de los coeficientes de la función objetivo indican cuánto pueden variar los coeficientes de las variables en la función objetivo antes de que la base óptima cambie.
+    
+    Gurobi Optimizer version 11.0.3 build v11.0.3rc0 (linux64 - "Arch Linux")
+    
+    CPU model: AMD A4-5000 APU with Radeon(TM) HD Graphics, instruction set [SSE2|AVX]
+    Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+    
+    Optimize a model with 6 rows, 7 columns and 14 nonzeros
+    Model fingerprint: 0xb009b215
+    Coefficient statistics:
+      Matrix range     [5e-01, 2e+01]
+      Objective range  [5e+01, 3e+05]
+      Bounds range     [0e+00, 0e+00]
+      RHS range        [1e+00, 5e+04]
+    Presolve removed 3 rows and 2 columns
+    Presolve time: 0.04s
+    Presolved: 3 rows, 5 columns, 10 nonzeros
+    
+    Iteration    Objective       Primal Inf.    Dual Inf.      Time
+           0    8.6982000e+06   1.166298e+05   0.000000e+00      0s
+           3    1.1968190e+07   0.000000e+00   0.000000e+00      0s
+    
+    Solved in 3 iterations and 0.07 seconds (0.00 work units)
+    Optimal objective  1.196819000e+07
+    
+    # Valores óptimos de las variables duales:
+    y1: 0.10
+    y2: 0.00
+    y3: 19620.00
+    y4: 17167.46
+    y5: 22072.46
+    y6: 0.00
+    y7: 0.00
+    
+    Valor Óptimo del Objetivo Dual: 11968190.00
+    
+    # Holgura o exceso de las restricciones duales:
+    D1: 0.00
+    D2: -817.46
+    D3: 0.00
+    D4: 0.00
+    D5: 0.00
+    D6: 1.00
+    
+    # Precios sombra de las restricciones duales:
+    D1: 200.00
+    D2: 0.00
+    D3: -10.00
+    D4: -400.00
+    D5: -10.00
+    D6: 0.00
+\end{verbatim}
+
+\subsection*{Incisos}
+\subsubsection*{a. Si el tiempo extra fuera de sólo \$1080/hora, ¿Wivco recurriría a él?}
+Rango del coeficiente OT de la Función Objetivo es \texttt{-inf to -13080.40}. Si actualmente el coeficiente o costo de la variable OT es de \$29430, entonces hablamos de disminución de costo. Como notamos que el rango de disminución es de \texttt{-inf to -13080.40}, la disminución de coeficiente (costo) no cambia la base óptima actual.
+
+El tiempo extra afectaría la restricción (R3) cuyo precio sombra es \$13080.40, es decir, por cada hora extra se incrementa la utilidad en \$13080.40. Así que si el tiempo extra fuera de sólo \$1080/hora, Wivco recurriría a él, puesto que sigue estando dentro del rango permisible y aumentaría la utilidad.
+
+\subsubsection*{b. Si cada unidad del producto 1 se vendiera en \$4185, ¿la base actual seguiría siendo óptima? ¿Cuál sería la nueva solución óptima?}
+Rango del coeficiente $P1$ de la Función Objetivo es \texttt{47415.10 to 52320.10}. Por lo que si el nuevo precio de venta del producto 1 es \$4185, está dentro del rango permisible y la base actual seguiría siendo óptima. La nueva solución óptima sería:
+
+$$
+\begin{aligned}
+Z &= 4185 \cdot 160 + 2160 \cdot 80 - 29430 \cdot 0 - 4905 \cdot 400 - 0 - 0 \\
+&= 669600 + 172800 - 0 - 1962000 - 0 - 0 \\
+&= 7978800
+\end{aligned}
+$$
+
+\subsubsection*{c. ¿Cuánto es lo más que Wivco debería estar dispuesta a pagar por otra unidad de materia prima?}
+El precio sombra de la restricción (R5) es \$14714.85. Esto significa que por cada unidad adicional de materia prima, la utilidad aumentaría en \$14714.85. Actualmente, el costo de la materia prima es de \$4905, por lo tanto, Wivco debería estar dispuesta a pagar hasta \$19619.85 por otra unidad de materia prima, valor que está dentro del rango del coeficiente RM de la función objetivo que es \texttt{-19619.85 to inf}.
+
+\subsubsection*{d. ¿Cuánto debería estar dispuesto a pagar Wivco por otra hora de tiempo máquina?}
+La restricción relacionada con el tiempo de máquina es la restricción (R7), cuyo precio sombra es \$0. Esto significa que Wivco no debería estar dispuesta a pagar por otra hora de tiempo máquina, ya que no afecta la utilidad de la compañía. No hay beneficio adicional por incrementar el tiempo de máquina, así que no vale la pena pagar por otra hora.
+
+\subsubsection*{e. Si a cada trabajador se le exigiera (como parte de la semana de trabajo regular) trabajar 45 horas por semana, ¿cuál sería la utilidad de la compañía?}
+Actualmente, los trabajadores trabajan 40 horas por semana, es decir, 4 trabajadores × 40 horas/trabajador = 160 horas. Si trabajan 45 horas por semana, sería, 4 trabajadores × 45 horas/trabajador = 180 horas, y la restricción (R3) tendría un nuevo RHS:
+
+$$
+0.75P1 + 0.5P2 \leq 180 + OT \quad \text{(R3)}
+$$
+
+El rango permisible del RHS de la restricción (R3) es \texttt{150.00 to 160.00}, así que la base óptima no cambia y la nueva restricción es válida. La nueva solución óptima sería utilizar el precio sombra de la restricción (R3) que es \$13080.40, es decir, por cada hora extra de trabajo se incrementa la utilidad en \$13080.40, entonces, la utilidad de la compañía sería:
+
+$$
+\begin{aligned}
+Z' &= Z + \Delta\text{RHS} \cdot \text{Precio sombra} \\
+Z' &= 7978800 + (180-160) \cdot 13080.40 \\
+Z' &= 7978800 + 261608 \\
+Z' &= 8240408
+\end{aligned}
+$$
+
+\subsubsection*{f. Explique por qué el precio sombra del renglón (R1) es 0.10. (Sugerencia: si el lado derecho de (R1) se incrementara de 50 a 51, entonces por no haber publicidad para el producto 1, ahora se venderían 51 unidades a la semana.)}
+La restricción asociada (R1) $0.75P1 + 10A1 \geq 50$ tiene un precio sombra de 0.10, lo que significa que por cada unidad adicional de RHS de la restricción (R1) se incrementa la utilidad en 0.10. Si el lado derecho (RHS) de la restricción (R1) se incrementara de 50 a 51, $0.75P1 + 10A1 \geq 51$, entonces en ausencia de publicidad para el producto 1, ahora se venderían 51 unidades a la semana. $0.75P1 + 10A1 \geq 51$ implica que la demanda del producto 1 debe ser de al menos 51 unidades, sin contar con cada 10 unidades de publicidad que se demandan por dólar gastado en publicidad del producto 1. Por esto, aunque el beneficio directo por cada unidad del producto 1 es de \$4050 y el costo de la demanda gracias a publicidad es de \$A1, tenemos más variables que afectan la demanda del producto 1, por lo que el precio sombra de la restricción (R1) es de 0.10.
+
+\subsubsection*{g. Wivco planea elaborar un nuevo producto (producto 3). Cada unidad se vende en \$55590 y requiere 2 horas de mano de obra, 1 unidad de materia prima y 2 horas de tiempo de máquina. ¿Debería Wivco fabricar el producto 3?}
+Debemos calcular su costo reducido ($\bar{c}_3$) y verificar si es negativo. Si el costo reducido es negativo, incluir el producto 3 aumentará el valor de la función objetivo. El costo reducido ($\bar{c}_3$) se calcula como:
+
+$$
+\bar{c}_j = \mathbf{c}_{BV} \mathbf{B}^{-1} \mathbf{a}_j - c_j
+$$
+
+(Página 270 de \textit{Operations Research: Applications and Algorithms} de Wayne L. Winston, 4th ed.)
+
+Donde:
+
+- $ c_j = 55590 $ (coeficiente de $ P3 $ en la función objetivo)
+- $\mathbf{c}_{BV} = [15 \cdot 3270, 8 \cdot 3270, -6 \cdot 3270, -1.5 \cdot 3270, -1, -1] $
+- $\mathbf{a}_3 = [2, 1, 2, 0, 0, 0, 2]^T $
+
+Nuevo modelo con producto 3:
+
+Función objetivo:
+
+$$
+\text{max } Z = 4050P1 + 2160P2 + 55590P3 - 29430OT - 4905RM - A1 - A2
+$$
+
+Restricciones:
+
+$$
+\begin{aligned}
+0.75P1 + 10A1 & \geq 50 \\
+0.75P2 + 15A2 & \geq 60 \\
+0.75P1 + 0.5P2 + 2P3 & \leq 160 + OT \\
+2P1 + P2 + P3 & \leq RM \\
+RM & \leq 400 \\
+A1 + A2 & \leq 100 \cdot 3270 \\
+1.5P1 + 0.8P2 + 2P3 & \leq 320 \\
+\text{Todas las variables} & \geq 0
+\end{aligned}
+$$
+
+Calculamos el costo reducido:
+
+$$
+\begin{aligned}
+\bar{c}_3 = \mathbf{c}_{BV} \mathbf{B}^{-1} \mathbf{a}_3 - c_3
+\end{aligned}
+$$
+
+Dado que el costo reducido es negativo, Wivco debería fabricar el producto 3, ya que aumentará el valor de la función objetivo.
+
+\subsubsection*{h. Si cada unidad del producto 2 se vendiera en \$32700, ¿la base actual seguiría siendo óptima?}
+Rango del coeficiente $P2$ de la Función Objetivo es \texttt{24524.95 to 26977.45}, por lo que si el nuevo precio de venta del producto 2 es \$32700, está fuera del rango permisible y la base óptima cambiaría. Necesitaríamos resolver el nuevo problema para determinar la nueva solución óptima.
+
+\subsection*{Problema Dual}
+Plantear y resolver el problema dual a partir de la información obtenida en la solución del primal Utilizando la información de precios sombra (dual prices) y holgura (slack) para resolver el dual utilizando holgura complementaria.
+
+\subsubsection*{Variables Duales:}
+\begin{itemize}
+    \item $y_1$ asociado con $R1$
+    \item $y_2$ asociado con $R2$
+    \item $y_3$ asociado con $R3$
+    \item $y_4$ asociado con $R4$
+    \item $y_5$ asociado con $R5$
+    \item $y_6$ asociado con $R6$
+    \item $y_7$ asociado con $R7$
+\end{itemize}
+
+\subsubsection*{Función Objetivo Dual:}
+$$
+\text{Minimizar } W = 50y_1 + 60y_2 + 160y_3 + 400y_5 + 327000y_6 + 320y_7
+$$
+
+\subsubsection*{Restricciones Dual:}
+$$
+\begin{aligned}
+0.75y_1 + 0.75y_3 + 2y_4 + 1.5y_7 &\geq 15 \cdot 3270 \\
+0.75y_2 + 0.5y_3 + y_4 + 0.8y_7 &\geq 8 \cdot 3270 \\
+-y_3 &\leq -6 \cdot 3270 \\
+y_4 - y_5 &\leq -1.5 \cdot 3270 \\
+10y_1 + 15y_2 &\leq 1 \\
+y_6 &\leq 1 \\
+\end{aligned}
+$$
+
+Resolviendo el modelo dual en Gurobi, se obtienen los siguientes resultados:
+
+\subsubsection*{Valores óptimos de las variables duales:}
+\begin{itemize}
+    \item $y_1$: 0.10
+    \item $y_2$: 0.00
+    \item $y_3$: 19620.00
+    \item $y_4$: 17167.46
+    \item $y_5$: 22072.46
+    \item $y_6$: 0.00
+    \item $y_7$: 0.00
+\end{itemize}
+
+\subsubsection*{Valor Óptimo del Objetivo Dual:} 11968190.00
+
+\subsubsection*{Holgura o exceso de las restricciones duales:}
+\begin{itemize}
+    \item $D1$: 0.00
+    \item $D2$: -817.46
+    \item $D3$: 0.00
+    \item $D4$: 0.00
+    \item $D5$: 0.00
+    \item $D6$: 1.00
+\end{itemize}
+
+\subsubsection*{Precios sombra de las restricciones duales:}
+\begin{itemize}
+    \item $D1$: 200.00
+    \item $D2$: 0.00
+    \item $D3$: -10.00
+    \item $D4$: -400.00
+    \item $D5$: -10.00
+    \item $D6$: 0.00
+\end{itemize}
+
+Estos resultados muestran que el problema dual está alineado con los resultados del primal, y se ha resuelto correctamente utilizando la holgura complementaria.
