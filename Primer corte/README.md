@@ -497,7 +497,6 @@ Una solución actual es aquella que se ha derivado utilizando las variables bás
 
 La **solución básica (BS)** es simplemente la solución obtenida al fijar las variables no básicas ($\mathbf{x}_{NBV}$) en cero y resolver el sistema resultante para las variables básicas ($\mathbf{x}_{BV}$). Esta solución no necesariamente cumple con las restricciones de no negatividad de las variables básicas, por lo que puede incluir valores negativos.
 
-
 ### Solución básica factible (BFS)
 Solución básica que también satisface todas las restricciones del problema PL. 
 
@@ -665,7 +664,6 @@ podemos eliminar las variables básicas del tableau óptimo y obtener su fila 0:
 $$
 \begin{aligned}
 
-
 z &=\mathbf{c}_{BV}\mathbf{B}^{-1}\mathbf{b} - \mathbf{c}_{BV}\mathbf{B}^{-1}\mathbf{N}\mathbf{x}_{NBV} + \mathbf{c}_{NBV}\mathbf{x}_{NBV}
 \\
 z + \mathbf{c}_{BV}\mathbf{B}^{-1}\mathbf{N}\mathbf{x}_{NBV} - \mathbf{c}_{NBV}\mathbf{x}_{NBV} &= \mathbf{c}_{BV}\mathbf{B}^{-1}\mathbf{b}
@@ -688,7 +686,13 @@ y
 
 $$\text{Lado derecho de la fila 0 del tableau óptimo} = \mathbf{c}_{BV}\mathbf{B}^{-1}\mathbf{b}$$
 
-### Multiplicador Simplex
+### Multiplicador Simplex $\Pi$, Precio Sombra de la i-ésima restricción o Valor Dual
+Valor que indica cuánto cambiaría la función objetivo por una unidad adicional del RHS de una restricción. 
+
+> El **precio sombra** de la i-ésima restricción es la cantidad en la que el valor óptimo de $z$ mejora (aumenta en un problema de maximización y disminuye en un problema de minimización) si incrementamos $b_i$ en 1 (de $b_i$ a $b_i + 1$).
+
+**Ejemplo**: Si el precio sombra de una restricción es 2, agregar una unidad al RHS de esa restricción incrementará la función objetivo en 2 unidades.
+
 **¿Cuál es el costo para la base $\mathbf{B}$?**
 
 $$
@@ -749,7 +753,6 @@ Donde
 
 **Propiedades de la dualidad**
 
-
 ### Costo marginal (Marginal Cost) de NBV
 Cambio en la función objetivo por una unidad adicional de una variable de decisión. **Ejemplo**: Si el costo marginal de $x_1$ es 3, entonces incrementar $x_1$ en una unidad incrementará la función objetivo en 3.
 
@@ -769,17 +772,9 @@ $$
 \bar{c}_j = \mathbf{c}_{BV} \mathbf{A_B}^{-1} \mathbf{a}_j - c_j
 $$
 
-### Precio Sombra de la i-ésima restricción
-Valor que indica cuánto cambiaría la función objetivo por una unidad adicional del RHS de una restricción. 
-
-> El **precio sombra** de la i-ésima restricción es la cantidad en la que el valor óptimo de $z$ mejora (aumenta en un problema de maximización y disminuye en un problema de minimización) si incrementamos $b_i$ en 1 (de $b_i$ a $b_i + 1$).
-
-**Ejemplo**: Si el precio sombra de una restricción es 2, agregar una unidad al RHS de esa restricción incrementará la función objetivo en 2 unidades.
 
 ### Holgura
 Diferencia entre el lado izquierdo y derecho de una restricción cuando se evalúa en la solución óptima. **Ejemplo**: Si la restricción es $2x + 3y \leq 10$ y en la solución óptima $2x + 3y = 8$, la holgura es 2.
-
-### Los multiplicadores del simplex
 
 ## Teoremas y Lemas Fundamentales en Programación Lineal
 
@@ -952,12 +947,6 @@ Un problema de programación lineal tiene múltiples soluciones óptimas si en l
 
 ### ¿Qué pasa con el dual si el costo sombra de una variable es 0?
 Si el costo sombra (precio dual) de una variable en el primal es 0, esto significa que la restricción correspondiente en el dual no tiene holgura (es decir, la restricción es exactamente una igualdad en la solución óptima). Esto implica que el recurso adicional no afecta el valor de la función objetivo del dual.
-
-### ¿Qué pasa si el primal y el dual tienen el mismo valor óptimo?
-Si el primal y el dual tienen el mismo valor óptimo, esto confirma el Teorema de Dualidad Fuerte, que establece que si ambos problemas tienen soluciones óptimas, los valores de sus funciones objetivo son iguales. Esto indica que ambos problemas alcanzaron la máxima eficiencia de recursos.
-
-### ¿Cómo se hace para saber si un problema tiene múltiples soluciones?
-Un problema tiene múltiples soluciones óptimas si, en la última iteración del método simplex, una variable no básica tiene un costo reducido de cero. Esto significa que hay una dirección en la que se puede mover sin cambiar el valor de la función objetivo, resultando en múltiples soluciones óptimas.
 
 ### ¿Qué significa el precio sombra de una restricción?
 El precio sombra de una restricción indica cuánto cambiará el valor de la función objetivo si se incrementa el lado derecho de la restricción en una unidad, manteniendo todo lo demás constante. En otras palabras, mide la sensibilidad del valor óptimo a cambios en la disponibilidad del recurso correspondiente.
