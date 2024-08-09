@@ -42,3 +42,12 @@ Las condiciones KKT establecen que una solución \(x^*\) del primal y \(y^*\) de
 
 ### ¿Cómo se determina si se debe introducir una nueva variable (producto) en el modelo?
 Para determinar si se debe introducir una nueva variable, se calcula su costo reducido (\(\bar{c}_j\)). Si el costo reducido es negativo en un problema de maximización, o positivo en un problema de minimización, entonces la introducción de esta variable mejorará el valor de la función objetivo y debe ser incluida en la solución.
+
+### ¿Para convertir a la forma estándar, el tipo de variabla de holgura (exceso o holgura) depende del tipo de restricción y de si es minimización o maximización?
+No, el tipo de variable de holgura (exceso o holgura) **no** depende de si el problema es de **minimización** o **maximización**. Depende únicamente del tipo de restricción que se esté tratando:
+
+- **\(\leq\) ** → **Variable de holgura \(s\)** (se suma para convertir la desigualdad en igualdad).
+- **\(\geq\) ** → **Variable de exceso \(e\)** (se resta para convertir la desigualdad en igualdad).
+- **\(=\)** → No requiere variables adicionales para convertir a la forma estándar. 
+
+Por lo tanto, la selección de una variable de holgura o de exceso es independiente del objetivo del problema (ya sea minimización o maximización) y está únicamente determinada por el tipo de desigualdad en las restricciones.
