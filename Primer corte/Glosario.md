@@ -1,4 +1,4 @@
-## Glosario de Programación Lineal
+## Glosario de Programación Lineal (Primer Corte)
 
 1. **Programación Lineal (PL)**:
     
